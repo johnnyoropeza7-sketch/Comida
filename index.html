@@ -99,7 +99,7 @@ ov.addEventListener('click',function(e){var a=e.target.dataset.a,k=e.target.data
   var u=ks[k],go=function(p){p.then(cargar)};
   if(a==='tg')go(api('keys/'+k+'/active','PUT',!u.active,1));
   else if(a==='dk'){if(confirm('¿Borrar a '+u.name+'?'))go(Promise.all([api('keys/'+k,'DELETE',null,1),api('views/'+k,'DELETE',null,1)]))}
-  else if(a==='lk'){var b=location.origin+location.pathname,t='Espectador: '+b+'?k='+k+'\nPanel: '+b+'?k='+k+'#mago';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(function(){prompt('Copia los enlaces:',t)})}
+  else if(a==='lk'){var b=location.origin+location.pathname,t='Espectador: '+b+'?k='+k+'\nPanel: '+b+'?k='+k+'#mago';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){alert('Enlaces copiados:\n'+t)}).catch(function(){prompt('Copia los enlaces:',t)})}
   else if(a==='nu'){var n=$('un').value.trim();if(n)go(api('keys/'+rk(),'PUT',{name:n,list:$('ul').value,ntfy:$('ut').value.trim(),modo:+$('um').value,espera:Math.min(10,Math.max(1,parseFloat($('us').value)||3)),active:true},1))}
   else if(a==='md')go(api('keys/'+k+'/modo','PUT',+u.modo===3?2:3,1));
   else if(a==='tm'){var v=parseFloat(prompt('Segundos de espera (1 a 10)',u.espera||3));if(v>=1&&v<=10)go(api('keys/'+k+'/espera','PUT',v,1))}
