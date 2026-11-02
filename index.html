@@ -8,7 +8,7 @@
 html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:17px -apple-system,system-ui,sans-serif}
 body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
 #top{height:48px;display:flex;align-items:center;justify-content:center;font-weight:600;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none}
-#sc{position:absolute;top:calc(48px + env(safe-area-inset-top,0px));bottom:env(safe-area-inset-bottom,0px);left:0;right:0;overflow-y:auto;scroll-snap-type:y proximity;-webkit-overflow-scrolling:touch}
+#sc{position:absolute;top:calc(48px + env(safe-area-inset-top,0px));bottom:env(safe-area-inset-bottom,0px);left:0;right:0;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch}
 .r{height:56px;box-sizing:border-box;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);scroll-snap-align:center}
 .r b{width:44px;color:var(--mut);font-weight:500}
 #band{position:absolute;left:0;right:0;height:56px;background:var(--band);pointer-events:none}
@@ -17,56 +17,103 @@ body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset
 #ov p{margin:0 0 24px;font-size:28px;font-weight:600}
 #ov small{color:var(--mut)}
 button{font:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--fg)}
+#ov{overflow:auto}
+input,textarea,select{width:100%;box-sizing:border-box;font:inherit;padding:10px;margin:0 0 8px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--fg)}
+.c{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 12px}
+.cr{color:var(--mut);font-size:13px;margin-top:20px}
 </style></head><body>
 <div id="top">Notas</div>
 <div id="sc"><div id="list"></div></div>
 <div id="band"></div>
-<div id="ov"><h2>IMPAR (1.ª persona)</h2><p id="oi">—</p><h2>PAR (2.ª persona)</h2><p id="op">—</p><small id="st"></small><br><br><small>Mantén 1 s el título para cerrar</small></div>
+<div id="ov"></div>
 <script>
-// ===== CONFIGURACIÓN (rellena solo lo que uses) =====
-var CFG={
-  ntfy:"",
-  url:"https://platos-67828-default-rtdb.firebaseio.com",
-  key:"plato8x2k9q"
-};
-
-// =====================================================
-</script>
-<script>
+var CFG={db:"https://platos-67828-default-rtdb.firebaseio.com",apiKey:""};
+var AM='mago@camilo.app',CREDIT='Aplicación realizada por el mago Camilo';
 var P=["Paella","Pizza margarita","Ceviche","Tacos al pastor","Lasaña","Sushi","Hamburguesa","Arepas","Empanadas","Tortilla española","Gazpacho","Risotto","Pad thai","Ramen","Falafel","Moussaka","Fajitas","Pollo al curry","Chilaquiles","Bandeja paisa","Sancocho","Ajiaco","Pasta carbonara","Ravioles","Ñoquis","Tamales","Pozole","Mole poblano","Cochinita pibil","Lomo saltado","Ají de gallina","Anticuchos","Feijoada","Moqueca","Asado argentino","Milanesa","Locro","Pastel de choclo","Cazuela de mariscos","Curanto","Fish and chips","Croque monsieur","Ratatouille","Bouillabaisse","Quiche lorraine","Coq au vin","Fondue de queso","Raclette","Schnitzel","Chucrut con salchichas","Goulash","Pierogi","Borscht","Stroganoff","Pelmeni","Shawarma","Kebab","Hummus","Tabulé","Kibbeh","Dolmades","Biryani","Pollo tikka masala","Samosas","Pollo tandoori","Dal","Dim sum","Pato laqueado","Arroz chaufa","Chow mein","Cerdo agridulce","Sopa wonton","Kimchi jjigae","Bibimbap","Bulgogi","Tempura","Teriyaki de pollo","Udon","Okonomiyaki","Tonkatsu","Pho","Banh mi","Rollitos primavera","Nasi goreng","Satay","Laksa","Tom yum","Curry verde tailandés","Injera","Tajín de cordero","Cuscús","Jollof","Poutine","Mac and cheese","Costillas BBQ","Pollo frito","Gumbo","Enchiladas","Burrito","Quesadilla","Pupusas","Gallo pinto","Mofongo","Ropa vieja","Pernil","Arroz con gandules","Tostones","Sopa de lima","Pastel de papa","Hamburguesa vegana"];
-var R=56,DWELL=2500,sc=document.getElementById('sc'),band=document.getElementById('band');
-var local={impar:null,par:null},last=0,tm=null,lp=null;
-var ov=document.getElementById('ov'),top=document.getElementById('top');
-var online=CFG.url&&CFG.key;
-function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function show(id,o){document.getElementById(id).textContent=o?o.n+' · '+o.dish:'—'}
-function paint(){show('oi',local.impar);show('op',local.par)}
-function espectador(){
-var h='';P.forEach(function(d,i){h+='<div class="r"><b>'+(i+1)+'</b><span>'+esc(d)+'</span></div>'});
-document.getElementById('list').innerHTML=h;
-function lay(){var pad=sc.clientHeight/2-R/2;document.getElementById('list').style.padding=pad+'px 0';band.style.top=(sc.offsetTop+pad)+'px'}
-lay();addEventListener('resize',lay);
-sc.addEventListener('scroll',function(){clearTimeout(tm);tm=setTimeout(dwell,DWELL)},{passive:true});
-function dwell(){
-  var i=Math.round(sc.scrollTop/R);if(i<0||i>99)return;var n=i+1;if(n===last)return;last=n;
-  var par=n%2?'impar':'par',o={n:n,dish:P[i],t:Date.now()};local[par]=o;paint();
-  if(CFG.ntfy){try{fetch('https://ntfy.sh/'+CFG.ntfy,{method:'POST',body:(par==='impar'?'Impar ':'Par ')+n+' · '+P[i],keepalive:true}).catch(function(){})}catch(e){}}
-  if(online){try{fetch(CFG.url+'/'+CFG.key+'/'+par+'.json',{method:'PUT',body:JSON.stringify(o),keepalive:true}).catch(function(){})}catch(e){}}
-}
-function down(){lp=setTimeout(function(){ov.style.display=ov.style.display==='block'?'none':'block';paint();document.getElementById('st').textContent=online?'Envío activo':'Modo local (sin envío)'},1000)}
-function up(){clearTimeout(lp)}
-top.addEventListener('touchstart',down,{passive:true});top.addEventListener('touchend',up);
-top.addEventListener('mousedown',down);top.addEventListener('mouseup',up);
-ov.addEventListener('touchstart',function(e){if(e.target===ov)down()},{passive:true});ov.addEventListener('touchend',up);
-}
-
-function panel(){
-  top.textContent='Panel';sc.style.display='none';band.style.display='none';ov.style.display='block';
-  var st=document.getElementById('st'),base=CFG.url+'/'+CFG.key,bt=document.createElement('button');
-  bt.textContent='Limpiar';ov.appendChild(bt);
-  function poll(){fetch(base+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){d=d||{};show('oi',d.impar);show('op',d.par);st.textContent='Conectado'}).catch(function(){st.textContent='Sin conexión'})}
-  if(!online){st.textContent='Falta configurar url y key en index.html';return}
-  poll();setInterval(poll,1000);bt.onclick=function(){fetch(base+'.json',{method:'DELETE'}).then(poll)};
-}
-if(location.hash==='#mago'){panel()}else{espectador()}
+var $=function(i){return document.getElementById(i)},ov=$('ov'),sc=$('sc'),band=$('band'),tok='',K='',R=56,ks={},ls={},ed='';
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
+function api(p,m,b,a){return fetch(CFG.db+'/'+p+'.json'+(a&&tok?'?auth='+tok:''),{method:m||'GET',body:b==null?undefined:JSON.stringify(b),cache:'no-store'}).then(function(r){return r.json()})}
+function rk(){return Array.from(crypto.getRandomValues(new Uint8Array(10)),function(b){return(b%36).toString(36)}).join('')}
+function hide(){sc.style.display='none';band.style.display='none'}
+function pant(h){hide();ov.style.display='block';ov.innerHTML=h+'<div class="cr">'+CREDIT+'</div>'}
+function ent(){pant('<h2>Clave de acceso</h2><input id="ik" placeholder="Clave"><button id="ib">Entrar</button>');
+  $('ib').onclick=function(){var v=$('ik').value.trim();if(v)location.href=location.pathname+'?k='+encodeURIComponent(v)}}
+var NM={a:'1.ª',b:'2.ª',c:'3.ª',x:'?'};
+function LB(m){return{a:m===3?'1.ª persona · impar 1–50':'1.ª persona · impar',b:m===3?'2.ª persona · par 1–50':'2.ª persona · par',c:'3.ª persona · par 51–100',x:'Fuera de rango'}}
+function slot(n,m){if(m!==3)return n%2?'a':'b';if(n%2)return n<=50?'a':'x';return n<=50?'b':'c'}
+function env(f,t){f().then(function(r){if(r&&(r.error||r.ok===false))throw 0}).catch(function(){if(t>0)setTimeout(function(){env(f,t-1)},1500)})}
+function mag(r){
+  var m=+r.modo===3?3:2,L=LB(m),S=m===3?['a','b','c']:['a','b'],voz=false,prev={},ini=false,h='';
+  S.concat('x').forEach(function(s){var d=s==='x'?' style="display:none"':'';h+='<h2 id="h'+s+'"'+d+'>'+L[s]+'</h2><p id="o'+s+'"'+d+'>—</p>'});
+  pant(h+'<small id="st">Conectando…</small><br><br><button id="vz">🔊 Dictado: apagado</button> <button id="cl">Limpiar</button>'+(r.ntfy?' <button id="pr">Probar reloj</button>':'')+'<div class="cr">'+esc(r.name)+'</div>');
+  function hablar(t){try{var u=new SpeechSynthesisUtterance(t);u.lang='es-ES';speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+  function poll(){api('views/'+K).then(function(d){
+    if(d&&d.error){$('st').textContent='Acceso revocado';return}d=d||{};
+    S.concat('x').forEach(function(s){var o=d[s],e=$('o'+s);e.textContent=o?o.n+' · '+o.dish:'—';
+      if(s==='x'&&o){e.style.display=$('hx').style.display='block'}
+      if(o&&ini&&voz&&(!prev[s]||prev[s].t!==o.t))hablar((s==='x'?'Fuera de rango':NM[s]+' persona')+': '+o.n+', '+o.dish);
+      prev[s]=o});
+    ini=true;$('st').textContent='Conectado'}).catch(function(){$('st').textContent='Sin conexión'})}
+  $('vz').onclick=function(){voz=!voz;this.textContent='🔊 Dictado: '+(voz?'activado':'apagado');if(voz){hablar('Dictado activado');try{navigator.wakeLock.request('screen').catch(function(){})}catch(e){}}};
+  $('cl').onclick=function(){api('views/'+K,'DELETE').then(poll)};
+  if(r.ntfy)$('pr').onclick=function(){env(function(){return fetch('https://ntfy.sh/'+r.ntfy,{method:'POST',body:'Prueba de reloj ✓'})},2)};
+  poll();setInterval(poll,1000)}
+function esp(rec,items){
+  var m=+rec.modo===3?3:2,E=Math.min(10,Math.max(1,+rec.espera||3))*1000,L=LB(m),S=m===3?['a','b','c']:['a','b'],h='';
+  items.forEach(function(d,i){h+='<div class="r"><b>'+(i+1)+'</b><span>'+esc(d)+'</span></div>'});
+  $('list').innerHTML=h;
+  function lay(){var p=sc.clientHeight/2-R/2;$('list').style.padding=p+'px 0';band.style.top=(sc.offsetTop+p)+'px'}
+  lay();addEventListener('resize',lay);
+  var loc={},last=0,tm,lp,tt=$('top');
+  function commit(){
+    var i=Math.round(sc.scrollTop/R);if(i<0||i>99||i>=items.length)return;var n=i+1;if(n===last)return;last=n;
+    var s=slot(n,m),o={n:n,dish:items[i],t:Date.now()};loc[s]=o;
+    env(function(){return api('views/'+K+'/'+s,'PUT',o)},5);
+    if(rec.ntfy)env(function(){return fetch('https://ntfy.sh/'+rec.ntfy,{method:'POST',body:NM[s]+' '+n+' · '+items[i]})},5)}
+  function arm(){clearTimeout(tm);tm=setTimeout(commit,E)}
+  ['scroll','touchstart','touchmove','touchend'].forEach(function(ev){sc.addEventListener(ev,arm,{passive:true})});
+  function f(s){var o=loc[s];return o?o.n+' · '+o.dish:'—'}
+  function tg(){if(ov.style.display==='block'){ov.style.display='none';return}
+    var x='';S.concat(loc.x?['x']:[]).forEach(function(s){x+='<h2>'+L[s]+'</h2><p>'+esc(f(s))+'</p>'});
+    ov.innerHTML=x+'<div class="cr">'+CREDIT+'<br>Mantén 1 s para cerrar</div>';ov.style.display='block'}
+  function dn(){clearTimeout(lp);lp=setTimeout(tg,1000)}function up(){clearTimeout(lp)}
+  [tt,ov].forEach(function(e){e.addEventListener('touchstart',dn,{passive:true});e.addEventListener('touchend',up);e.addEventListener('mousedown',dn);e.addEventListener('mouseup',up)})}
+function adm(){
+  pant('<h2>Administrador</h2><input id="ap" type="password" placeholder="Contraseña"><button id="ab">Entrar</button><div id="am" class="cr"></div>');
+  $('ab').onclick=function(){
+    fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:AM,password:$('ap').value,returnSecureToken:true})})
+    .then(function(r){return r.json()}).then(function(d){if(d.idToken){tok=d.idToken;cargar()}else $('am').textContent='Contraseña incorrecta o falta apiKey'}).catch(function(){$('am').textContent='Sin conexión'})}}
+function cargar(){Promise.all([api('keys',0,null,1),api('lists',0,null,1)]).then(function(r){
+  if((r[0]&&r[0].error)||(r[1]&&r[1].error)){pant('<h2>Sesión caducada</h2><p>Recarga la página</p>');return}
+  ks=r[0]||{};ls=r[1]||{};dibujar()})}
+function dibujar(){
+  var o='<option value="">Platos (por defecto)</option>',h='<h2>Usuarios</h2>';
+  Object.keys(ls).forEach(function(i){o+='<option value="'+i+'">'+esc(ls[i].name)+'</option>'});
+  Object.keys(ks).forEach(function(k){var u=ks[k];h+='<div class="c"><b>'+esc(u.name)+'</b> '+(u.active?'🟢':'🔴')+'<br><small>Clave: '+k+' · '+esc(u.list&&ls[u.list]?ls[u.list].name:'Platos')+(u.ntfy?' · ntfy':'')+' · modo '+(+u.modo===3?3:2)+' · '+(u.espera||3)+' s'+'</small><br><button data-a="tg" data-k="'+k+'">'+(u.active?'Revocar':'Activar')+'</button> <button data-a="md" data-k="'+k+'">Modo</button> <button data-a="tm" data-k="'+k+'">Tiempo</button> <button data-a="lk" data-k="'+k+'">Enlaces</button> <button data-a="dk" data-k="'+k+'">Borrar</button></div>'});
+  h+='<div class="c"><input id="un" placeholder="Nombre del usuario"><select id="ul">'+o+'</select><select id="um"><option value="2">2 espectadores</option><option value="3">3 espectadores</option></select><input id="us" type="number" min="1" max="10" placeholder="Segundos de espera (3)"><input id="ut" placeholder="Tema ntfy (opcional)"><button data-a="nu">Crear usuario</button></div><h2>Listas</h2>';
+  Object.keys(ls).forEach(function(i){h+='<div class="c"><b>'+esc(ls[i].name)+'</b> <small>'+(ls[i].items||[]).length+' elementos</small><br><button data-a="el" data-k="'+i+'">Editar</button> <button data-a="dl" data-k="'+i+'">Borrar</button></div>'});
+  var e=ls[ed]||{name:'',items:[]};
+  h+='<div class="c"><input id="ln" placeholder="Nombre de la lista" value="'+esc(e.name).replace(/"/g,'&quot;')+'"><textarea id="li" rows="8" placeholder="Un elemento por línea (mínimo 100)">'+esc((e.items||[]).join('\n'))+'</textarea><button data-a="gl">'+(ed?'Guardar cambios':'Crear lista')+'</button></div>';
+  ov.innerHTML=h+'<div class="cr">'+CREDIT+'</div>'}
+ov.addEventListener('click',function(e){var a=e.target.dataset.a,k=e.target.dataset.k;if(!a||!tok)return;
+  var u=ks[k],go=function(p){p.then(cargar)};
+  if(a==='tg')go(api('keys/'+k+'/active','PUT',!u.active,1));
+  else if(a==='dk'){if(confirm('¿Borrar a '+u.name+'?'))go(Promise.all([api('keys/'+k,'DELETE',null,1),api('views/'+k,'DELETE',null,1)]))}
+  else if(a==='lk'){var b=location.origin+location.pathname,t='Espectador: '+b+'?k='+k+'\nPanel: '+b+'?k='+k+'#mago';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(function(){prompt('Copia los enlaces:',t)})}
+  else if(a==='nu'){var n=$('un').value.trim();if(n)go(api('keys/'+rk(),'PUT',{name:n,list:$('ul').value,ntfy:$('ut').value.trim(),modo:+$('um').value,espera:Math.min(10,Math.max(1,parseFloat($('us').value)||3)),active:true},1))}
+  else if(a==='md')go(api('keys/'+k+'/modo','PUT',+u.modo===3?2:3,1));
+  else if(a==='tm'){var v=parseFloat(prompt('Segundos de espera (1 a 10)',u.espera||3));if(v>=1&&v<=10)go(api('keys/'+k+'/espera','PUT',v,1))}
+  else if(a==='el'){ed=k;dibujar()}
+  else if(a==='dl'){if(confirm('¿Borrar la lista?'))go(api('lists/'+k,'DELETE',null,1))}
+  else if(a==='gl'){var nm=$('ln').value.trim(),it=$('li').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);if(!nm||!it.length)return;var id=ed||'l'+rk();ed='';go(api('lists/'+id,'PUT',{name:nm,items:it},1))}});
+var q=new URLSearchParams(location.search);K=q.get('k')||'';
+try{if(K){localStorage.setItem('k',K);history.replaceState(null,'',location.pathname+location.hash)}else K=localStorage.getItem('k')||''}catch(e){}
+addEventListener('hashchange',function(){location.reload()});
+if(location.hash==='#admin')adm();
+else if(!K)ent();
+else api('keys/'+K).then(function(r){
+  if(!r||!r.active){hide();return}
+  if(location.hash==='#mago'){mag(r);return}
+  (r.list?api('lists/'+r.list).catch(function(){return null}):Promise.resolve(null)).then(function(l){esp(r,l&&l.items?[].concat(l.items):P)})
+}).catch(hide);
 </script></body></html>
