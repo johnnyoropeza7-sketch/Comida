@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notas</title>
+<style>
+:root{--bg:#fff;--fg:#1c1c1e;--mut:#8e8e93;--line:#e5e5ea;--band:rgba(224,161,0,.12);color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--fg:#f2f2f7;--line:#2c2c2e;--band:rgba(224,161,0,.18)}}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:17px -apple-system,system-ui,sans-serif}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+#top{height:48px;display:flex;align-items:center;justify-content:center;font-weight:600;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none}
+#sc{position:absolute;top:calc(48px + env(safe-area-inset-top,0px));bottom:env(safe-area-inset-bottom,0px);left:0;right:0;overflow-y:auto;scroll-snap-type:y proximity;-webkit-overflow-scrolling:touch}
+.r{height:56px;box-sizing:border-box;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);scroll-snap-align:center}
+.r b{width:44px;color:var(--mut);font-weight:500}
+#band{position:absolute;left:0;right:0;height:56px;background:var(--band);pointer-events:none}
+#ov{display:none;position:fixed;inset:0;background:var(--bg);z-index:9;padding:calc(60px + env(safe-area-inset-top,0px)) 20px 20px}
+#ov h2{margin:0 0 4px;font-size:15px;color:var(--mut);font-weight:500}
+#ov p{margin:0 0 24px;font-size:28px;font-weight:600}
+#ov small{color:var(--mut)}
+button{font:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--fg)}
+</style></head><body>
+<div id="top">Notas</div>
+<div id="sc"><div id="list"></div></div>
+<div id="band"></div>
+<div id="ov"><h2>IMPAR (1.ª persona)</h2><p id="oi">—</p><h2>PAR (2.ª persona)</h2><p id="op">—</p><small id="st"></small><br><br><small>Mantén 1 s el título para cerrar</small></div>
+<script>
+// ===== CONFIGURACIÓN (rellena solo lo que uses) =====
+var CFG={
+  ntfy:"",  // tema de ntfy para el reloj, ej: "mago-k82xq1v9"
+  url:"",   // Firebase Realtime Database, ej: "https://mi-proyecto-default-rtdb.firebaseio.com"
+  key:""    // clave secreta inventada, ej: "plato8x2k9q"
+};
+// =====================================================
+</script>
+<script>
+var P=["Paella","Pizza margarita","Ceviche","Tacos al pastor","Lasaña","Sushi","Hamburguesa","Arepas","Empanadas","Tortilla española","Gazpacho","Risotto","Pad thai","Ramen","Falafel","Moussaka","Fajitas","Pollo al curry","Chilaquiles","Bandeja paisa","Sancocho","Ajiaco","Pasta carbonara","Ravioles","Ñoquis","Tamales","Pozole","Mole poblano","Cochinita pibil","Lomo saltado","Ají de gallina","Anticuchos","Feijoada","Moqueca","Asado argentino","Milanesa","Locro","Pastel de choclo","Cazuela de mariscos","Curanto","Fish and chips","Croque monsieur","Ratatouille","Bouillabaisse","Quiche lorraine","Coq au vin","Fondue de queso","Raclette","Schnitzel","Chucrut con salchichas","Goulash","Pierogi","Borscht","Stroganoff","Pelmeni","Shawarma","Kebab","Hummus","Tabulé","Kibbeh","Dolmades","Biryani","Pollo tikka masala","Samosas","Pollo tandoori","Dal","Dim sum","Pato laqueado","Arroz chaufa","Chow mein","Cerdo agridulce","Sopa wonton","Kimchi jjigae","Bibimbap","Bulgogi","Tempura","Teriyaki de pollo","Udon","Okonomiyaki","Tonkatsu","Pho","Banh mi","Rollitos primavera","Nasi goreng","Satay","Laksa","Tom yum","Curry verde tailandés","Injera","Tajín de cordero","Cuscús","Jollof","Poutine","Mac and cheese","Costillas BBQ","Pollo frito","Gumbo","Enchiladas","Burrito","Quesadilla","Pupusas","Gallo pinto","Mofongo","Ropa vieja","Pernil","Arroz con gandules","Tostones","Sopa de lima","Pastel de papa","Hamburguesa vegana"];
+var R=56,DWELL=2500,sc=document.getElementById('sc'),band=document.getElementById('band');
+var local={impar:null,par:null},last=0,tm=null,lp=null;
+var ov=document.getElementById('ov'),top=document.getElementById('top');
+var online=CFG.url&&CFG.key;
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function show(id,o){document.getElementById(id).textContent=o?o.n+' · '+o.dish:'—'}
+function paint(){show('oi',local.impar);show('op',local.par)}
+function espectador(){
+var h='';P.forEach(function(d,i){h+='<div class="r"><b>'+(i+1)+'</b><span>'+esc(d)+'</span></div>'});
+document.getElementById('list').innerHTML=h;
+function lay(){var pad=sc.clientHeight/2-R/2;document.getElementById('list').style.padding=pad+'px 0';band.style.top=(sc.offsetTop+pad)+'px'}
+lay();addEventListener('resize',lay);
+sc.addEventListener('scroll',function(){clearTimeout(tm);tm=setTimeout(dwell,DWELL)},{passive:true});
+function dwell(){
+  var i=Math.round(sc.scrollTop/R);if(i<0||i>99)return;var n=i+1;if(n===last)return;last=n;
+  var par=n%2?'impar':'par',o={n:n,dish:P[i],t:Date.now()};local[par]=o;paint();
+  if(CFG.ntfy){try{fetch('https://ntfy.sh/'+CFG.ntfy,{method:'POST',body:(par==='impar'?'Impar ':'Par ')+n+' · '+P[i],keepalive:true}).catch(function(){})}catch(e){}}
+  if(online){try{fetch(CFG.url+'/'+CFG.key+'/'+par+'.json',{method:'PUT',body:JSON.stringify(o),keepalive:true}).catch(function(){})}catch(e){}}
+}
+function down(){lp=setTimeout(function(){ov.style.display=ov.style.display==='block'?'none':'block';paint();document.getElementById('st').textContent=online?'Envío activo':'Modo local (sin envío)'},1000)}
+function up(){clearTimeout(lp)}
+top.addEventListener('touchstart',down,{passive:true});top.addEventListener('touchend',up);
+top.addEventListener('mousedown',down);top.addEventListener('mouseup',up);
+ov.addEventListener('touchstart',function(e){if(e.target===ov)down()},{passive:true});ov.addEventListener('touchend',up);
+}
+
+function panel(){
+  top.textContent='Panel';sc.style.display='none';band.style.display='none';ov.style.display='block';
+  var st=document.getElementById('st'),base=CFG.url+'/'+CFG.key,bt=document.createElement('button');
+  bt.textContent='Limpiar';ov.appendChild(bt);
+  function poll(){fetch(base+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){d=d||{};show('oi',d.impar);show('op',d.par);st.textContent='Conectado'}).catch(function(){st.textContent='Sin conexión'})}
+  if(!online){st.textContent='Falta configurar url y key en index.html';return}
+  poll();setInterval(poll,1000);bt.onclick=function(){fetch(base+'.json',{method:'DELETE'}).then(poll)};
+}
+if(location.hash==='#mago'){panel()}else{espectador()}
+</script></body></html>
