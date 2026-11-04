@@ -118,7 +118,7 @@ function adm(){inAdm=true;
   pant('<h2>Administrador</h2><input id="ap" type="password" placeholder="Contraseña"><button id="ab">Entrar</button><div id="am" class="cr"></div>');
   $('ab').onclick=function(){
     fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:AM,password:$('ap').value,returnSecureToken:true})})
-    .then(function(r){return r.json()}).then(function(d){if(d.idToken){tok=d.idToken;cargar()}else $('am').textContent='Contraseña incorrecta o falta apiKey'}).catch(function(){$('am').textContent='Sin conexión'})}}
+    .then(function(r){return r.json()}).then(function(d){if(d.idToken){tok=d.idToken;cargar()}else $('am').textContent='Error de Firebase: '+((d.error&&d.error.message)||'desconocido')}).catch(function(){$('am').textContent='Sin conexión'})}}
 function cargar(){Promise.all([api('keys',0,null,1),api('lists',0,null,1)]).then(function(r){
   if((r[0]&&r[0].error)||(r[1]&&r[1].error)){pant('<h2>Sesión caducada</h2><p>Recarga la página</p>');return}
   ks=r[0]||{};ls=r[1]||{};dibujar()})}
