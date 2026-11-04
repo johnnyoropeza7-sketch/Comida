@@ -58,7 +58,7 @@ function bindL(){var b=location.origin+location.pathname,i=$('lkv');
   $('lks').onclick=function(){if(navigator.share)navigator.share({url:i.value}).catch(function(){});else cp(i.value)};
   ov.addEventListener('click',function(e){var c=e.target.dataset.c,o=e.target.dataset.o;
     if(c){cp(b+'?k='+K+(c==='_'?'':'&l='+c),'Enlace de esa lista (copiado)')}
-    else if(o){location.href=b+(o==='_'?'':'?l='+o)+'#local'}})}
+    else if(o){location.href=b+'?k='+K+(o==='_'?'':'&l='+o)+'#local'}})}
 function mag(r,a){
   var m=+r.modo===3?3:2,L=LB(m),S=m===3?['a','b','c']:['a','b'],voz=false,prev={},ini=false,h='',seen={};
   S.forEach(function(s){h+='<h2><span class="dot" id="d'+s+'"></span>'+L[s]+'</h2><p id="o'+s+'">—</p>'});
@@ -156,7 +156,7 @@ ov.addEventListener('click',function(e){var a=e.target.dataset.a,k=e.target.data
   else if(a==='dl'){if(confirm('¿Borrar la lista?'))go(api('lists/'+k,'DELETE',null,1))}
   else if(a==='gl'){var nm=$('ln').value.trim(),it=$('li').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);if(!nm||!it.length)return;var id=ed||'l'+rk();ed='';go(api('lists/'+id,'PUT',{name:nm,items:it},1))}});
 var q=new URLSearchParams(location.search);K=q.get('k')||'';var LID=q.get('l')||'';
-try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')||'';if(location.search)history.replaceState(null,'',location.pathname+(LID?'?l='+encodeURIComponent(LID):'')+location.hash)}catch(e){}
+try{if(K)localStorage.setItem('k',K);else K=localStorage.getItem('k')||''}catch(e){}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 var g3=null,g3f=0;
 function cen(t){var x=0,y=0;for(var i=0;i<3;i++){x+=t[i].clientX;y+=t[i].clientY}return[x/3,y/3]}
