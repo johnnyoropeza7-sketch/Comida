@@ -65,13 +65,13 @@ function ctlh(S){var b='style="flex:1 1 45%;font-size:18px;padding:16px"',x='<di
 function mag(r,a,only){
   var m=+r.modo===3?3:2,L=LB(m),S=m===3?['a','b','c']:['a','b'],voz=false,prev={},ini=false,h='',seen={},ult='',cmT=null,ha=false;
   h+=ctlh(S);S.forEach(function(s){h+='<h2><span class="dot" id="d'+s+'"></span>'+L[s]+'</h2><p id="o'+s+'">—</p>'});
-  pant(h+'<small id="st">Conectando…</small><br><br>'+(only?'<button id="ha">🔊 Hablar aquí: apagado</button> ':'')+'<button id="vz">🔊 Dictado: apagado</button> <button id="cl">Limpiar</button> <button id="ns">Nueva sala</button>'+(r.ntfy?' <button id="pr">Probar reloj</button>':'')+(only?'':kwhtml()+lhtml(r,a))+'<div class="cr">'+esc(r.name)+'</div>');
+  pant(h+'<small id="st">Conectando…</small><br><br>'+(only?'<button id="ha">🔊 Hablar aquí: apagado</button> ':'')+'<button id="vz">🔊 Dictado: apagado</button> <button id="cl">Limpiar</button> <button id="ns">Nueva sala</button>'+(r.ntfy?' <button id="pr">Probar reloj</button>':'')+(only?rkhtml():kwhtml()+lhtml(r,a))+'<div class="cr">'+esc(r.name)+'</div>');
   function hablar(t){ult=t;say(t)}
-  function run(c){if(c!=='rp'&&c!=='ec'&&S.indexOf(c)<0)return;if(c==='rp'){say(ult||'Nada que repetir');return}if(c==='ec'){ult='';$('cl').onclick();say('De nuevo');return}
+  function run(c){if(c!=='rp'&&c!=='ec'&&S.indexOf(c)<0)return;if(c==='rp'){say(ult||'Nada que repetir',ult?RN:1);return}if(c==='ec'){ult='';$('cl').onclick();say('De nuevo');return}
     var o=prev[c];hablar(NM[c]+' persona: '+(o?(o.img?'dibujo':(o.n?o.n+', ':'')+o.dish):'sin dato'))}
   function ir(c){if(only){env(function(){return api('views/'+K+'/cmd','PUT',{c:c,t:Date.now()})},3);if(ha)run(c)}else run(c)}
   $('ctl').onclick=function(e){var c=e.target.dataset.s||e.target.dataset.c;if(c)ir(c)};
-  if(only)$('ha').onclick=function(){ha=!ha;this.textContent='🔊 Hablar aquí: '+(ha?'activado':'apagado');if(ha)say('Listo')};else kwbind(run);
+  if(only)$('ha').onclick=function(){ha=!ha;this.textContent='🔊 Hablar aquí: '+(ha?'activado':'apagado');if(ha)say('Listo')};kwbind(only?ir:run);
   function poll(){api('views/'+K).then(function(d){
     if(d&&d.error){$('st').textContent='Acceso revocado';return}d=d||{};
     var cm=d.cmd;if(cmT===null)cmT=cm&&cm.t?cm.t:0;else if(cm&&cm.t&&cm.t!==cmT){cmT=cm.t;if(!only)run(cm.c)}
@@ -89,7 +89,7 @@ function mag(r,a,only){
   $('ns').onclick=function(){if(confirm('¿Nueva sala? Los espectadores actuales quedarán fuera.'))api('views/'+K,'DELETE').then(poll)};
   if(r.ntfy)$('pr').onclick=function(){env(function(){return fetch('https://ntfy.sh/'+r.ntfy,{method:'POST',body:'Prueba de reloj ✓'})},2)};
   if(!only)bindL();poll();setInterval(poll,1000)}
-var UU=null,KW=jl('kw',{}),RC=null,RCon=false,RCpause=false,kwrun=null,kwlast=0;
+var UU=null,KW=jl('kw',{}),RC=null,RCon=false,RCpause=false,kwrun=null,kwlast=0,SQ=0,ASG='',RK=jl('rk',{}),RN=jl('rn',3),rklast=0;
 function nrm(t){return(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}
 function kwresume(){RCpause=false;if(RCon&&RC)try{RC.start()}catch(e){}}
 function kwstop(){RCon=false;try{RC.abort()}catch(e){}}
@@ -100,12 +100,28 @@ function kwstart(){var SR=window.SpeechRecognition||window.webkitSpeechRecogniti
   RC.onend=function(){if(RCon&&!RCpause)setTimeout(function(){try{RC.start()}catch(x){}},300)};
   RC.onerror=function(ev){if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){RCon=false;var b=$('kwb');if(b)b.textContent='🎤 Escuchar: sin permiso del micrófono'}};
   try{RC.start()}catch(x){}}
+var AN={a:'1.ª persona',b:'2.ª persona',c:'3.ª persona',rp:'Repetir',ec:'Empezar de nuevo'};
+function rkl(a){return RK[a]?(RK[a].c||RK[a].k):'sin asignar'}
+function rksv(){try{localStorage.setItem('rk',JSON.stringify(RK))}catch(e){}}
+function rklabels(){Array.prototype.forEach.call(document.querySelectorAll('[data-as]'),function(b){var a=b.dataset.as;if(a!=='x')b.textContent=AN[a]+': '+rkl(a)})}
+function rkhtml(){var h='<div class="c"><small>Control remoto: asigna sus botones (toca uno y luego pulsa el botón del control)</small><br><br>';
+  Object.keys(AN).forEach(function(a){h+='<button data-as="'+a+'" style="width:100%;margin:0 0 6px">'+AN[a]+': '+rkl(a)+'</button>'});
+  return h+'<button data-as="x">Borrar asignaciones</button><br><small id="lk2">Última tecla detectada: —</small><br><br><small>Veces que repite al decir la frase o pulsar Repetir (1 a 5)</small><input data-rn type="number" min="1" max="5" value="'+RN+'"></div>'}
+document.addEventListener('keydown',function(e){var lk=$('lk2');if(lk)lk.textContent='Última tecla detectada: '+(e.code||e.key);
+  if(ASG){e.preventDefault();RK[ASG]={k:e.key,c:e.code};ASG='';rksv();rklabels();return}
+  if(/^(INPUT|TEXTAREA)$/.test((e.target||{}).tagName))return;
+  var now=Date.now();if(now-rklast<500)return;
+  for(var a in RK){var r=RK[a];if(r&&((r.c&&r.c===e.code)||(!r.c&&r.k===e.key))){e.preventDefault();rklast=now;if(kwrun)kwrun(a);return}}});
 function kwhtml(){var v=function(k){return esc(KW[k]||'').replace(/"/g,'&quot;')};
-  return '<div class="c"><small>Palabras clave (dilas en voz alta)</small><input data-kw="rp" placeholder="Palabra para repetir lo último" value="'+v('rp')+'"><input data-kw="a" placeholder="Palabra: 1.ª persona" value="'+v('a')+'"><input data-kw="b" placeholder="Palabra: 2.ª persona" value="'+v('b')+'"><input data-kw="c" placeholder="Palabra: 3.ª persona" value="'+v('c')+'"><button id="kwb">🎤 Escuchar: '+(RCon?'activado':'apagado')+'</button></div>'}
+  return '<div class="c"><small>Palabras clave (dilas en voz alta)</small><input data-kw="rp" placeholder="Palabra para repetir lo último" value="'+v('rp')+'"><input data-kw="a" placeholder="Palabra: 1.ª persona" value="'+v('a')+'"><input data-kw="b" placeholder="Palabra: 2.ª persona" value="'+v('b')+'"><input data-kw="c" placeholder="Palabra: 3.ª persona" value="'+v('c')+'"><button id="kwb">🎤 Escuchar: '+(RCon?'activado':'apagado')+'</button></div>'+rkhtml()}
 function kwbind(run){kwrun=run;var b=$('kwb');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-as]'),function(x){x.onclick=function(){if(x.dataset.as==='x'){RK={};rksv();rklabels();return}ASG=x.dataset.as;x.textContent='Pulsa el botón del control…'}});
+  var rn=document.querySelector('[data-rn]');if(rn)rn.oninput=function(){RN=Math.min(5,Math.max(1,parseInt(rn.value)||3));try{localStorage.setItem('rn',JSON.stringify(RN))}catch(e){}};
   Array.prototype.forEach.call(document.querySelectorAll('input[data-kw]'),function(i){i.oninput=function(){KW[i.dataset.kw]=i.value.trim();try{localStorage.setItem('kw',JSON.stringify(KW))}catch(e){}}});
   if(b)b.onclick=function(){if(RCon)kwstop();else kwstart();b.textContent='🎤 Escuchar: '+(RCon?'activado':'apagado')}}
-function say(t){try{var s=window.speechSynthesis;if(!s)return;s.cancel();if(RCon){RCpause=true;try{RC.abort()}catch(e){}setTimeout(kwresume,Math.max(3000,t.length*130))}setTimeout(function(){var u=new SpeechSynthesisUtterance(t);u.lang='es-ES';try{var v=s.getVoices().filter(function(x){return /^es/i.test(x.lang)})[0];if(v)u.voice=v}catch(e){}u.onend=u.onerror=kwresume;UU=u;s.resume();s.speak(u)},80)}catch(e){}}
+function say(t,n){n=n||1;try{var s=window.speechSynthesis;if(!s)return;s.cancel();var tok=++SQ;if(RCon){RCpause=true;try{RC.abort()}catch(e){}setTimeout(kwresume,Math.max(3000,t.length*130*n+n*800))}
+  setTimeout(function(){var v=null;try{v=s.getVoices().filter(function(x){return /^es/i.test(x.lang)})[0]}catch(e){}
+    (function one(i){var u=new SpeechSynthesisUtterance(t);u.lang='es-ES';if(v)u.voice=v;var nx=function(){if(tok!==SQ)return;if(i+1<n)setTimeout(function(){if(tok===SQ)one(i+1)},600);else kwresume()};u.onend=u.onerror=nx;UU=u;if(i===0)s.resume();s.speak(u)})(0)},80)}catch(e){}}
 function audioGate(){var g=document.createElement('div');g.style.cssText='position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center';
   g.innerHTML='<div style="font-size:20px;font-weight:600">Modo sin internet</div><button id="ag" style="font-size:20px;padding:16px 24px">🔊 Toca para activar el audio</button><small style="color:var(--mut)">Conecta el auricular antes. Oirás “Listo”.</small>';
   document.body.appendChild(g);
@@ -148,7 +164,7 @@ function esp(rec,items,lc){
   cv.addEventListener('pointerup',fin);cv.addEventListener('pointerleave',fin);
   $('cc').onclick=function(){c.fillStyle='#fff';c.fillRect(0,0,360,360)};
   // vista secreta (mantener 1 s en el título)
-  function lrun(c){if(c==='rp'){say(lastTx||'Nada que repetir');return}
+  function lrun(c){if(c==='rp'){say(lastTx||'Nada que repetir',lastTx?RN:1);return}
     if(c==='ec'){last=0;loc={};hist=[];lastTx='';say('De nuevo');return}
     var i={a:0,b:1,c:2}[c];if(i==null)return;lastTx=NM[c]+' persona: '+(hist[i]||'sin dato');say(lastTx)}
   if(lc){kwrun=lrun;var cT=null;if(K)setInterval(function(){if(!navigator.onLine)return;api('views/'+K+'/cmd').then(function(d){if(!d||d.error){if(cT===null)cT=0;return}if(cT===null){cT=d.t||0;return}if(d.t&&d.t!==cT){cT=d.t;lrun(d.c)}}).catch(function(){})},1500)}
