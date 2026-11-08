@@ -138,11 +138,13 @@ function esp(rec,items,lc){
     var s=S[mi];loc[s]=o;
     env(function(){return api('views/'+K+'/'+s,'PUT',o)},5);
     if(rec.ntfy)env(function(){return fetch('https://ntfy.sh/'+rec.ntfy,{method:'POST',body:NM[s]+' '+(o.img?'dibujo':(o.n?o.n+' · ':'')+o.dish)})},5)}
-  function commit(){
+  var moved=false;
+  function commit(){moved=false;
     var i=Math.round(sc.scrollTop/R);if(i<0||i>99||i>=items.length)return;var n=i+1;if(n===last)return;last=n;
     put({n:n,dish:items[i],t:Date.now()})}
   function arm(){clearTimeout(tm);tm=setTimeout(commit,E)}
-  ['scroll','touchstart','touchmove','touchend'].forEach(function(ev){sc.addEventListener(ev,arm,{passive:true})});
+  var mv=function(){moved=true;arm()};sc.addEventListener('touchmove',mv,{passive:true});sc.addEventListener('wheel',mv,{passive:true});
+  sc.addEventListener('scroll',function(){if(moved)arm()},{passive:true});
   // registro por orden de apertura + punto verde
   function reg(){return api('views/'+K+'/p','POST',{v:{'.sv':'timestamp'}}).then(function(r){if(r&&r.name){pid=r.name;had=true;try{sessionStorage.setItem('pid'+K,pid)}catch(e){}}})}
   function beat(){api('views/'+K+'/p').then(function(d){
